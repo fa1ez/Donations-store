@@ -49,40 +49,49 @@ interface Data {
 
 
 export default function Body() {
-  const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Data[]>([]);
   const [filter, setFilter] = useState<Data[]>(data);
   const [statuses, setstatuses] = useState<Status[]>([]);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
 
 
+   const fetchData = async () => {
+    try {
+      const statres = await fetch(`https://n3o-coding-task-react.azurewebsites.net/api/v1/donationItems/statuses`);
+      setstatuses(await statres.json());
+
+      const res = await fetch(`https://n3o-coding-task-react.azurewebsites.net/api/v1/donationItems/all`);
+      const data: Data[] = await res.json();
+      setData(data);
+      setFilter(data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const statres = await fetch(`https://n3o-coding-task-react.azurewebsites.net/api/v1/donationItems/statuses`);
-        setstatuses(await statres.json());
-
-        const res = await fetch(`https://n3o-coding-task-react.azurewebsites.net/api/v1/donationItems/all`);
-        const data: Data[] = await res.json();
-        setData(data);
-        setFilter(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchData();
   }, []);
-
-  useEffect(() => {
-    setLoading(!(data.length));
-  }, [data]);
 
   const handleButtonClick = (statusId: string) => {
     setSelectedStatusId(statusId);
   };
   
+  const handleReset = async () => {
+    try {
+      const response = await fetch(`https://n3o-coding-task-react.azurewebsites.net/api/v1/donationItems/reset`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        console.log('success');
+        fetchData();
+      } else {
+        console.error('Error resetting data:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error resetting data:', error);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: "flex" }}>
@@ -99,6 +108,11 @@ export default function Body() {
             </Button>
           </div>
         ))}
+        <div style={{marginLeft:'16px'}}>
+          <Button type='primary' onClick={handleReset} danger >
+            Reset
+          </Button>
+        </div>
       </div>
       <Row gutter={16}>
         {filter.map((dt) => (
